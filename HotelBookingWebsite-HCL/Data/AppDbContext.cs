@@ -9,6 +9,7 @@ namespace HotelBooking.Data
         public AppDbContext(DbContextOptions<AppDbContext> options):base(options)
         {
         }
+        public DbSet<Promotion> Promotions { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Hotel> Hotels { get; set; }
         public DbSet<Payment> Payments { get; set; }

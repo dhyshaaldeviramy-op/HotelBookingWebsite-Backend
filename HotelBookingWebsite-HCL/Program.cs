@@ -1,7 +1,15 @@
+
 using HotelBooking.Data;
+using HotelBooking.Helper;
+using HotelBooking.Model;
 using HotelBooking.Services.Implementations;
 using HotelBooking.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,39 +77,46 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped<IHotelService,HotelService>();  
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular", policy =>
-        policy.WithOrigins("http://localhost:4200")
-              .AllowAnyHeader()
-              .AllowAnyMethod());
-});
-
+// ─── CONTROLLERS ─────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 
+// ─── SWAGGER ─────────────────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// ─── SEED SUPER ADMIN ────────────────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
+
+    if (!context.Users.Any(u => u.Role == "SuperAdmin"))
+    {
+        var admin = new User
+        {
+            Name = "Super Admin",
+            email = "admin@hotel.com",
+            Role = "SuperAdmin",
+            Status = "Approved"
+        };
+        admin.password = hasher.HashPassword(admin, "Admin@123");
+        context.Users.Add(admin);
+        context.SaveChanges();
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    //app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+//app.UseSerilogRequestLogging();
 app.UseCors("AllowAngular");
-
+app.UseRateLimiter();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
