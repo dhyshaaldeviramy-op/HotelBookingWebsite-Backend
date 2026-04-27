@@ -1,4 +1,6 @@
 using HotelBooking.Data;
+using HotelBooking.Services.Implementations;
+using HotelBooking.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +11,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
+builder.Services.AddScoped<IHotelService,HotelService>();  
 
 builder.Services.AddCors(options =>
 {
