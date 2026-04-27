@@ -9,7 +9,7 @@ namespace HotelBooking.Model
         public string email { get; set; }
         public string password { get; set; }
         public string Role { get; set; }
-        //public ICollection<Booking> Bookings { get; set; }
+        
 
 
     }
